@@ -1,106 +1,65 @@
 package com.sriyank.animationsdemo
 
-import android.animation.Animator
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.transition.*
 import android.view.View
-import android.widget.Toast
+import android.view.animation.LinearInterpolator
 import kotlinx.android.synthetic.main.activity_main.*
 
+class MainActivity : AppCompatActivity() {
 
-class MainActivity : AppCompatActivity(), Animator.AnimatorListener {
-
-	private var rotateAnimator: ObjectAnimator? = null
-	private var translateAnimator: ObjectAnimator? = null
-	private var scaleAnimator: ObjectAnimator? = null
-	private var fadeAnimator: ObjectAnimator? = null
+	private lateinit var scene1: Scene
+	private lateinit var scene2: Scene
+	private lateinit var currentScene: Scene
+	private lateinit var transition: Transition
+	private lateinit var transitionSet: TransitionSet
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_main)
 
+		// Step 1: Create a Scene object for both the starting and ending layout
+		scene1 = Scene.getSceneForLayout(sceneRoot, R.layout.scene1, this)
+		scene2 = Scene.getSceneForLayout(sceneRoot, R.layout.scene2, this)
+
+		// Step 2: Create a Transition object to define what type of animation you want
+//		transition = TransitionInflater.from(this).inflateTransition(R.transition.example_2)
+
+		val cbTransition = ChangeBounds()
+		cbTransition.duration = 500
+		cbTransition.interpolator = LinearInterpolator()
+
+		val fadeInTransition = Fade(Fade.IN)
+		fadeInTransition.duration = 250
+		fadeInTransition.startDelay = 400
+		fadeInTransition.addTarget(R.id.txvTitle)
+
+		val fadeOutTransition = Fade(Fade.OUT)
+		fadeOutTransition.duration = 50
+		fadeOutTransition.addTarget(R.id.txvTitle)
+
+		transitionSet = TransitionSet()
+		transitionSet.ordering = TransitionSet.ORDERING_TOGETHER
+
+		transitionSet.addTransition(cbTransition)
+		transitionSet.addTransition(fadeInTransition)
+		transitionSet.addTransition(fadeOutTransition)
+
+		scene1.enter()
+		currentScene = scene1
 	}
 
-	fun rotateAnimation(view: View) {
+	fun onClick(view: View) {
+		// Step 3: Call TransitionManager.go() to run animation
 
-		rotateAnimator = ObjectAnimator.ofFloat(targetImage, "rotation", 0.0f, -180.0f)
-		rotateAnimator?.apply {
-			duration = 1000
-			repeatCount = 1
-			repeatMode = ValueAnimator.REVERSE
-			addListener(this@MainActivity)
-			start()
+		currentScene = if (currentScene === scene1) {
+			TransitionManager.go(scene2, transitionSet)
+			scene2
+		} else {
+			TransitionManager.go(scene1, transitionSet)
+			scene1
 		}
-	}
-
-	fun scaleAnimation(view: View) {
-
-		scaleAnimator = ObjectAnimator.ofFloat(targetImage, "scaleX", 1.0f, 3.0f)
-		scaleAnimator?.apply {
-			duration = 1000
-			repeatCount = 1
-			repeatMode = ValueAnimator.REVERSE
-			addListener(this@MainActivity)
-			start()
-		}
-	}
-
-	fun translateAnimation(view: View) {
-
-		translateAnimator = ObjectAnimator.ofFloat(targetImage, "translationX", 0f, 200f)
-		translateAnimator?.apply {
-			duration = 1000
-			repeatCount = 1
-			repeatMode = ValueAnimator.REVERSE
-			addListener(this@MainActivity)
-			start()
-		}
-
-		// translateAnimator.cancel()
-	}
-
-	fun fadeAnimation(view: View) {
-
-		fadeAnimator = ObjectAnimator.ofFloat(targetImage, "alpha", 1.0f, 0.0f)
-		fadeAnimator?.apply {
-			duration = 1500
-			repeatCount = 1
-			repeatMode = ValueAnimator.REVERSE
-			addListener(this@MainActivity)
-			start()
-		}
-	}
-
-	// Implementation of AnimatorListener interface
-	override fun onAnimationStart(animation: Animator?) {
-
-		if (animation == scaleAnimator)
-			Toast.makeText(this, "Scale Animation Started", Toast.LENGTH_SHORT).show()
-
-		if (animation == rotateAnimator)
-			Toast.makeText(this, "Rotate Animation Started", Toast.LENGTH_SHORT).show()
-
-		if (animation == translateAnimator)
-			Toast.makeText(this, "Translate Animation Started", Toast.LENGTH_SHORT).show()
-
-		if (animation == fadeAnimator)
-			Toast.makeText(this, "Fade Animation Started", Toast.LENGTH_SHORT).show()
-	}
-
-	override fun onAnimationRepeat(animation: Animator?) {
-
-		Toast.makeText(this, "Animation Repeated", Toast.LENGTH_SHORT).show()
-	}
-
-	override fun onAnimationEnd(animation: Animator?) {
-
-		Toast.makeText(this, "Animation Ended", Toast.LENGTH_SHORT).show()
-	}
-
-	override fun onAnimationCancel(animation: Animator?) {
-
-		Toast.makeText(this, "Animation Cancelled", Toast.LENGTH_SHORT).show()
+		
 	}
 }
